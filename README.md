@@ -1,5 +1,9 @@
 # Portable Secure Exchange Client
 
+<p align="center">
+  <img src="docs/images/portable-secure-exchange-client-social-preview.jpg" alt="Portable Secure Exchange Client portfolio cover" width="1000">
+</p>
+
 A self-contained, cross-platform client for controlled file exchange using a **local web UI**, **embedded persistence**, **file-integrity verification**, and a deliberately simple **IN/OUT filesystem integration contract**.
 
 The project is an independent portfolio implementation of an enterprise architecture problem: an external organization needs a user-facing client, but the client application should not depend on direct access to remote corporate web resources. A separate secure transport subsystem owns inter-organization delivery, VPN connectivity and transport certificates.
