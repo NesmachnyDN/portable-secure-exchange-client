@@ -3,7 +3,19 @@ name: Self-contained packaging
 on:
   push:
     branches: ["main"]
+    paths:
+      - 'pom.xml'
+      - 'src/**'
+      - 'scripts/package-app.*'
+      - 'scripts/smoke-packaged-app.sh'
+      - '.github/workflows/package.yml'
   pull_request:
+    paths:
+      - 'pom.xml'
+      - 'src/**'
+      - 'scripts/package-app.*'
+      - 'scripts/smoke-packaged-app.sh'
+      - '.github/workflows/package.yml'
   workflow_dispatch:
 
 permissions:
