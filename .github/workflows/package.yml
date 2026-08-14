@@ -1,0 +1,114 @@
+name: Self-contained packaging
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-app-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Build production application
+        run: mvn -B -DskipTests package
+
+      - name: Create Linux app image
+        run: ./scripts/package-app.sh
+
+      - name: Smoke-test bundled runtime launcher
+        run: ./scripts/smoke-packaged-app.sh
+
+      - name: Archive Linux app image
+        run: tar -C target/package -czf target/portable-secure-exchange-client-linux-x64.tar.gz PortableSecureExchangeClient
+
+      - name: Upload Linux app image
+        uses: actions/upload-artifact@v7
+        with:
+          name: portable-secure-exchange-client-linux-x64
+          path: target/portable-secure-exchange-client-linux-x64.tar.gz
+          if-no-files-found: error
+
+  windows-app-image:
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Build production application
+        run: mvn -B -DskipTests package
+
+      - name: Create Windows app image
+        shell: pwsh
+        run: ./scripts/package-app.ps1
+
+      - name: Smoke-test bundled runtime launcher
+        shell: pwsh
+        run: |
+          $env:JAVA_HOME = ''
+          $exe = Join-Path $PWD 'target\package\PortableSecureExchangeClient\PortableSecureExchangeClient.exe'
+          if (-not (Test-Path $exe)) { throw "Packaged launcher not found: $exe" }
+          $process = Start-Process -FilePath $exe -PassThru
+          try {
+            $ready = $false
+            for ($i = 0; $i -lt 60; $i++) {
+              if ($process.HasExited) { throw "Packaged application exited with code $($process.ExitCode)" }
+              try {
+                $response = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8080/' -TimeoutSec 2
+                if ($response.StatusCode -eq 200) { $ready = $true; break }
+              } catch { }
+              Start-Sleep -Seconds 1
+            }
+            if (-not $ready) { throw 'Timed out waiting for packaged application.' }
+          } finally {
+            if (-not $process.HasExited) { Stop-Process -Id $process.Id -Force }
+          }
+
+      - name: Archive Windows app image
+        shell: pwsh
+        run: Compress-Archive -Path 'target\package\PortableSecureExchangeClient' -DestinationPath 'target\portable-secure-exchange-client-windows-x64.zip'
+
+      - name: Upload Windows app image
+        uses: actions/upload-artifact@v7
+        with:
+          name: portable-secure-exchange-client-windows-x64
+          path: target/portable-secure-exchange-client-windows-x64.zip
+          if-no-files-found: error
