@@ -1,0 +1,33 @@
+# Runtime state
+/data/
+/exchange/
+/logs/
+
+# Java / Maven
+/target/
+*.class
+
+# Vaadin / frontend generated state
+node_modules/
+package.json
+package-lock.json
+pnpm-lock.yaml
+vite.config.ts
+src/main/frontend/generated/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local secrets / keys
+*.p12
+*.pfx
+*.jks
+*.pem
+*.key
+.env
