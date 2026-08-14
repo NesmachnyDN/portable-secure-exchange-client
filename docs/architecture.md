@@ -35,12 +35,15 @@ User / local browser
 - **Persistence:** embedded H2 database for local metadata and audit history.
 - **Filesystem integration:** stable IN/OUT contract. Network transport is intentionally outside this repository.
 - **Integrity:** SHA-256 digest registration and verification detects content changes after the file enters the controlled workflow.
+- **Authenticity extension:** a detached-signature port isolates the workflow from concrete cryptographic providers and key stores.
 
-## Integrity model
+## Integrity and signature model
 
-The first public increment implements digest-based integrity control. The digest is stored independently in the local database and also emitted as a sidecar for transport simulation. The database value lets the client detect a file replacement even if the file itself is modified later.
+The executable file-exchange flow uses digest-based integrity control. The digest is stored independently in the local database and also emitted as a sidecar for transport simulation. The database value lets the client detect a file replacement even if the file itself is modified later.
 
-A production cryptographic design should add a detached digital-signature provider backed by an externally provisioned certificate/private key. That extension is intentionally represented as a future adapter rather than embedding historical vendor cryptography or credentials in the public repository.
+For stronger authenticity, the repository also defines `DetachedSignatureProvider` and a JCA reference adapter. The reference adapter signs file content with `SHA256withECDSA`; tests generate ephemeral EC key pairs and prove that changing the file, changing the signature or verifying with another public key fails. No production private key or certificate is bundled.
+
+A deployment can supply a vendor- or OS-specific signature adapter and certificate lifecycle behind the same port without coupling those concerns to the file-exchange workflow.
 
 ## Transport simulator
 
