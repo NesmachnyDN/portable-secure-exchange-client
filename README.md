@@ -42,14 +42,16 @@ The UI is intentionally web-based but **local**. Spring Boot runs on loopback an
 - verify incoming checksum metadata;
 - quarantine missing/mismatching integrity data;
 - persist transfer status and audit events in embedded H2;
+- provide a vendor-neutral detached-signature port and standard JCA reference adapter;
+- prove by tests that modified content, the wrong public key and a tampered detached signature are rejected;
 - simulate the external folder transport without pretending to implement VPN/security transport;
 - bind the application UI to `127.0.0.1` only.
 
-## Integrity versus transport security
+## Integrity, authenticity and transport security
 
 These are separate concerns.
 
-**Application integrity control** detects modification/substitution of file content inside the workflow. The first public increment uses SHA-256 with an independently persisted digest. A later increment will add a detached-signature provider abstraction.
+**Application integrity control** detects modification/substitution of file content inside the workflow. The default file-exchange flow registers SHA-256 independently from the file. A separate `DetachedSignatureProvider` extension point demonstrates cryptographic authenticity and tamper detection with a standard JCA implementation. Production certificate/private-key provisioning is intentionally not wired into the default runtime and no private key is stored in this repository.
 
 **Transport security** (VPN, transport certificates and the actual cross-organization delivery product) is an external responsibility and intentionally not implemented here.
 
@@ -62,7 +64,7 @@ These are separate concerns.
 - embedded H2
 - Maven
 
-Vaadin 25 is the current recommended line for new projects and requires Java 21+ and Spring Boot 4.1+. The project intentionally follows that current baseline rather than reproducing the historical prototype stack.
+The project intentionally follows a current Java/Spring/Vaadin baseline rather than reproducing the historical prototype stack.
 
 ## Run from source
 
@@ -121,14 +123,15 @@ The simulator copies files only. It intentionally does **not** model VPN or tran
 - [Security model](docs/security-model.md)
 - [ADR-001: Local web UI](docs/adr-001-local-web-ui.md)
 - [ADR-002: Filesystem IN/OUT integration](docs/adr-002-filesystem-integration.md)
+- [ADR-003: Detached-signature port](docs/adr-003-detached-signature-port.md)
 
 ## Roadmap
 
 1. Current: filesystem workflow, integrity registry, audit and local UI.
-2. Detached digital-signature port with a standard JCA demo implementation.
-3. Self-contained `jlink`/`jpackage` distributions for Windows and Linux without machine-wide Java installation.
+2. Current: vendor-neutral detached-signature port with a standard JCA reference adapter and tamper tests.
+3. Next: self-contained `jlink`/`jpackage` distributions for Windows and Linux without machine-wide Java installation.
 4. More explicit duplicate/replay handling and recovery semantics.
-5. Browserless Vaadin UI tests and tamper-oriented integration tests.
+5. Browserless Vaadin UI tests and end-to-end folder tamper tests.
 
 ## Development approach
 
